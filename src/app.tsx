@@ -1,8 +1,9 @@
-import { Box, useApp, useInput } from "ink";
-import { useState } from "react";
+import { Box, Text, useApp, useInput } from "ink";
+import { createElement, useState } from "react";
 import { InputBox } from "./components/InputBox.js";
 import { MessageList } from "./components/MessageList.js";
 import { StatusBar } from "./components/StatusBar.js";
+import { DARK_THEME, LIGHT_THEME, ThemeContext } from "./hooks/useTheme.js";
 import type { AppState, ChatMessage } from "./types.js";
 
 const DEFAULT_MODEL = "claude-sonnet-4-6";
@@ -17,6 +18,36 @@ function makeMessage(role: ChatMessage["role"], content: string): ChatMessage {
   };
 }
 
+// Transcript panel — shows all messages with timestamps
+function TranscriptPanel({ messages }: { messages: ChatMessage[] }) {
+  return (
+    <Box flexDirection="column" borderStyle="single" borderColor="cyan" width={60} padding={1}>
+      <Text color="cyan" bold>
+        Transcript
+      </Text>
+      <Text dimColor>Ctrl+O to close</Text>
+      <Box flexDirection="column" marginTop={1}>
+        {messages.map((m) => (
+          <Box key={m.id} flexDirection="column" marginBottom={1}>
+            <Text dimColor>
+              [{m.timestamp.toLocaleTimeString()}]{" "}
+              <Text
+                color={m.role === "user" ? "cyan" : m.role === "assistant" ? "green" : "yellow"}
+              >
+                {m.role}
+              </Text>
+            </Text>
+            <Text wrap="wrap">
+              {m.content.slice(0, 200)}
+              {m.content.length > 200 ? "…" : ""}
+            </Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 export function App() {
   const { exit } = useApp();
 
@@ -27,10 +58,33 @@ export function App() {
     model: DEFAULT_MODEL,
   });
 
-  // Ctrl+C exits
-  useInput((_input, key) => {
-    if (key.ctrl && _input === "c") {
+  const [showTranscript, setShowTranscript] = useState(false);
+
+  const theme = state.theme === "dark" ? DARK_THEME : LIGHT_THEME;
+
+  // Global shortcuts (handled at app level, not input level)
+  useInput((input, key) => {
+    // Ctrl+C → exit
+    if (key.ctrl && input === "c") {
       exit();
+      return;
+    }
+    // Ctrl+T → toggle theme
+    if (key.ctrl && input === "t") {
+      setState((prev) => ({ ...prev, theme: prev.theme === "dark" ? "light" : "dark" }));
+      return;
+    }
+    // Ctrl+O → toggle transcript
+    if (key.ctrl && input === "o") {
+      setShowTranscript((prev) => !prev);
+      return;
+    }
+    // Ctrl+L → clear screen by adding a system message separator
+    if (key.ctrl && input === "l") {
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, makeMessage("system", "─── screen cleared ───")],
+      }));
     }
   });
 
@@ -52,7 +106,7 @@ export function App() {
       isStreaming: true,
     }));
 
-    // placeholder — will be replaced with real Claude API call in Milestone 2
+    // placeholder — replaced with real Claude API call in Milestone 2
     setTimeout(() => {
       setState((prev) => ({
         ...prev,
@@ -66,6 +120,7 @@ export function App() {
 
   function handleSlashCommand(input: string) {
     const cmd = input.trim().toLowerCase();
+
     if (cmd === "/clear") {
       setState((prev) => ({
         ...prev,
@@ -78,7 +133,10 @@ export function App() {
         ...prev,
         messages: [
           ...prev.messages,
-          makeMessage("system", "Available commands: /clear, /help, /quit"),
+          makeMessage(
+            "system",
+            "Commands: /clear  /help  /quit\nShortcuts: Ctrl+T theme · Ctrl+O transcript · Ctrl+L clear · Esc vim normal mode",
+          ),
         ],
       }));
       return;
@@ -87,6 +145,7 @@ export function App() {
       exit();
       return;
     }
+
     setState((prev) => ({
       ...prev,
       messages: [...prev.messages, makeMessage("system", `Unknown command: ${input}`)],
@@ -94,12 +153,20 @@ export function App() {
   }
 
   return (
-    <Box flexDirection="column" height="100%">
-      <StatusBar model={state.model} isStreaming={state.isStreaming} />
-      <Box borderStyle="single" borderColor="gray" flexDirection="column" flexGrow={1}>
-        <MessageList messages={state.messages} />
-      </Box>
-      <InputBox onSubmit={handleSubmit} isDisabled={state.isStreaming} />
-    </Box>
+    // ThemeContext makes the theme available to all child components
+    createElement(
+      ThemeContext.Provider,
+      { value: theme },
+      <Box flexDirection="column" height="100%">
+        <StatusBar model={state.model} isStreaming={state.isStreaming} themeName={state.theme} />
+        <Box flexDirection="row" flexGrow={1}>
+          <Box borderStyle="single" borderColor="gray" flexDirection="column" flexGrow={1}>
+            <MessageList messages={state.messages} />
+          </Box>
+          {showTranscript && <TranscriptPanel messages={state.messages} />}
+        </Box>
+        <InputBox onSubmit={handleSubmit} isDisabled={state.isStreaming} />
+      </Box>,
+    )
   );
 }
