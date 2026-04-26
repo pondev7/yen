@@ -12,7 +12,7 @@ A TUI-based coding agent built with TypeScript + Bun + Ink, aiming to match and 
 
 | # | Milestone | Status |
 |---|---|---|
-| 1 | Foundation & TUI Shell | 🔲 Not started |
+| 1 | Foundation & TUI Shell | 🔄 In progress |
 | 2 | Claude API Integration & Streaming | 🔲 Not started |
 | 3 | Tool Use & The Agentic Loop | 🔲 Not started |
 | 4 | Advanced Coding Tools & LSP | 🔲 Not started |
@@ -31,7 +31,7 @@ A TUI-based coding agent built with TypeScript + Bun + Ink, aiming to match and 
 ---
 
 ## Milestone 1 — Foundation & TUI Shell
-**Status:** 🔲 Not started
+**Status:** 🔄 In progress
 **Goal:** Build a polished, production-quality terminal interface before touching any AI.
 
 ### Build
