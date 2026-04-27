@@ -1,3 +1,6 @@
+# Agent runtime
+.agent/
+
 # Logs
 logs
 *.log
