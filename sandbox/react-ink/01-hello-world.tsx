@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: React + Ink basics — rendering to the terminal
 // RUN:   bun run sandbox/react-ink/01-hello-world.tsx
+// PREREQUISITE: 00-jsx-rendering.tsx, 00b-layout.tsx
 // SEE:   src/index.tsx — entry point of the real app
 // ─────────────────────────────────────────────────────────────
 
@@ -9,8 +10,8 @@
 // it renders to stdout using terminal escape codes.
 // You write components exactly like React — same hooks, same JSX.
 //
-// Box  → like <div>  — a container with layout properties
-// Text → like <span> — displays text with optional styling
+// Box  → a container with layout properties (see 00b-layout.tsx)
+// Text → displays text with optional styling
 
 import { Box, Text, render } from "ink";
 

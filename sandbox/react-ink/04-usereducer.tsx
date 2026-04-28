@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: useReducer — managing complex state in React
 // RUN:   bun run sandbox/react-ink/04-usereducer.tsx
+// PREREQUISITE: 03-usestate.tsx, typescript/06-reducers.ts
 // SEE:   src/hooks/useInputBuffer.ts — useReducer in the real app
 // ─────────────────────────────────────────────────────────────
 

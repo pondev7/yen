@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: Keyboard input, useInput, special keys
 // RUN:   bun run sandbox/react-ink/05-keyboard-input.tsx
+// PREREQUISITE: 03-usestate.tsx
 // SEE:   src/components/InputBox.tsx — full keyboard handling
 // ─────────────────────────────────────────────────────────────
 

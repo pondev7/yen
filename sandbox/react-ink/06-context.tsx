@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: React Context — sharing state without prop drilling
 // RUN:   bun run sandbox/react-ink/06-context.tsx
+// PREREQUISITE: 03-usestate.tsx
 // SEE:   src/hooks/useTheme.ts — ThemeContext in the real app
 // ─────────────────────────────────────────────────────────────
 

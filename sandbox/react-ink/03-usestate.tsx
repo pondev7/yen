@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: useState — local component state + re-rendering
 // RUN:   bun run sandbox/react-ink/03-usestate.tsx
+// PREREQUISITE: 00-jsx-rendering.tsx, 00b-layout.tsx, 01-hello-world.tsx
 // SEE:   src/components/StatusBar.tsx — useState for branch/streaming
 // ─────────────────────────────────────────────────────────────
 

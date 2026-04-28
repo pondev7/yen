@@ -1,8 +1,25 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: The reducer pattern — predictable state updates
 // RUN:   bun run sandbox/typescript/06-reducers.ts
+// PREREQUISITE: 01b-functions.ts (spread operator)
 // SEE:   src/hooks/useInputBuffer.ts — the full reducer in the app
 // ─────────────────────────────────────────────────────────────
+
+// ── CONCEPT 0: The spread operator with objects (quick recap) ─
+// Reducers depend heavily on the spread operator.
+// See 01b-functions.ts for the full tutorial — quick recap here:
+//
+// Python equivalent:   { **existing_dict, key: new_value }
+// TypeScript:          { ...existingObj, key: newValue }
+//
+// It COPIES all fields from existingObj, then applies overrides.
+// Original object is NEVER modified.
+
+const config = { model: "sonnet", maxTokens: 1024, streaming: false };
+const updatedConfig = { ...config, streaming: true };
+//                      ^^^^^^^^^ copy all fields, then override streaming
+console.log(config.streaming);         // false — original unchanged
+console.log(updatedConfig.streaming);  // true  — new object
 
 // ── CONCEPT 1: What is a reducer? ────────────────────────────
 // A reducer is a pure function:

@@ -1,8 +1,54 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: Union types and type narrowing
 // RUN:   bun run sandbox/typescript/03-unions-narrowing.ts
+// PREREQUISITE: 00-from-python.ts, 01-basics.ts
 // SEE:   src/hooks/useInputBuffer.ts — BufferAction discriminated union
 // ─────────────────────────────────────────────────────────────
+
+// ── CONCEPT 0a: typeof — checking types at runtime ────────────
+// Python:  isinstance(x, str)    isinstance(x, int)
+// TypeScript: typeof x === "string"   typeof x === "number"
+//
+// typeof returns a STRING: "string" | "number" | "boolean" | "object" | "undefined" | "function"
+// Note: typeof null === "object"  (a famous JS quirk — null is not an object, but typeof says it is)
+
+const val: unknown = "hello";
+console.log(typeof val);  // "string"
+
+if (typeof val === "string") {
+  console.log(val.toUpperCase());  // TypeScript KNOWS it's a string here
+}
+
+// ── CONCEPT 0b: The switch statement ─────────────────────────
+// Python didn't have switch until 3.10 (match statement).
+// TypeScript's switch is like C/Java-style switch — very common.
+//
+// switch (expression) {
+//   case value1:
+//     // code
+//     break;        ← REQUIRED to stop falling through to next case
+//   case value2:
+//     // code
+//     break;
+//   default:        ← like Python's else (optional)
+//     // code
+// }
+
+const day = "Monday";
+switch (day) {
+  case "Saturday":
+  case "Sunday":
+    console.log("Weekend");
+    break;
+  case "Monday":
+    console.log("Weekday");  // ← this prints
+    break;
+  default:
+    console.log("Some other day");
+}
+
+// Without `break`, execution "falls through" to the next case — usually a bug.
+// TypeScript's linter (Biome) will warn you about unintentional fallthrough.
 
 // ── CONCEPT 1: Union types ────────────────────────────────────
 // A union type means "this can be ONE of these types"

@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: Components, props, and composition
 // RUN:   bun run sandbox/react-ink/02-components-props.tsx
+// PREREQUISITE: 00-jsx-rendering.tsx, 00b-layout.tsx
 // SEE:   src/components/MessageList.tsx — real component with props
 // ─────────────────────────────────────────────────────────────
 
@@ -53,6 +54,10 @@ function Message({ role, content, timestamp }: MessageProps) {
 // ── CONCEPT 3: Children prop ──────────────────────────────────
 // Components can accept children — content placed between their tags.
 // Like how <Box> wraps <Text> in all our components.
+//
+// React.ReactNode = "anything React can render":
+//   a string, a number, a JSX element, an array of elements, null, undefined
+// It's the type for "whatever you put between opening and closing tags".
 
 interface PanelProps {
   title: string;

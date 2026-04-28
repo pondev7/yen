@@ -1,9 +1,40 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: Async/await, Promises, for await...of (streaming)
 // RUN:   bun run sandbox/typescript/05-async-await.ts
+// PREREQUISITE: 00-from-python.ts, 01b-functions.ts
 // SEE:   src/components/StatusBar.tsx — getGitBranch()
 //        Milestone 2 — streaming Claude responses
 // ─────────────────────────────────────────────────────────────
+
+// ── CONCEPT 0: JavaScript's concurrency model ─────────────────
+// Python has two concurrency models:
+//   - threading: true parallel threads (OS-level)
+//   - asyncio:   single-threaded, cooperative multitasking (event loop)
+//
+// JavaScript/TypeScript ONLY has the event loop — no real threads.
+// This means:
+//   - One thing runs at a time
+//   - But while WAITING for I/O (file, network), other code can run
+//   - You never deal with race conditions on shared memory
+//
+// Python asyncio and JavaScript async/await are the same CONCEPT,
+// but different syntax. If you know asyncio, this will feel familiar.
+//
+// Key difference: in Python you must explicitly run the event loop.
+//   asyncio.run(main())
+// In JavaScript/Bun, the event loop runs automatically.
+// Any `await` at top level just works.
+
+// ── CONCEPT 0b: setTimeout — the JS equivalent of time.sleep ──
+// Python: time.sleep(0.1)   — blocks for 0.1 seconds
+// JavaScript: setTimeout(callback, ms)   — calls callback after ms milliseconds
+//
+// setTimeout does NOT block — it schedules a callback for later.
+// This is why we wrap it in a Promise (see Concept 2 below).
+//
+// Example: setTimeout(() => console.log("later!"), 100)
+//          → prints "later!" after 100ms
+//          → does NOT pause the current code
 
 // ── CONCEPT 1: Why async exists ───────────────────────────────
 // Some operations take time: reading a file, calling an API, running a command.

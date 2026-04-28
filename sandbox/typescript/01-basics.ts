@@ -1,7 +1,18 @@
 // ─────────────────────────────────────────────────────────────
 // TOPIC: TypeScript basics — types, inference, const/let
 // RUN:   bun run sandbox/typescript/01-basics.ts
+// PREREQUISITE: 00-from-python.ts
 // ─────────────────────────────────────────────────────────────
+
+// ── CONCEPT 0: TypeScript's type system vs Python's ───────────
+// Python has type hints (since 3.5) but they are NOT enforced at runtime:
+//   def greet(name: str) -> str:  ← Python just ignores this at runtime
+//
+// TypeScript types ARE enforced at compile time:
+//   function greet(name: string): string  ← error if you pass a number
+//
+// The difference: Python hints are documentation. TS types are rules.
+// This is why TypeScript catches bugs before you even run the code.
 
 // ── CONCEPT 1: Explicit type annotations ─────────────────────
 // You write a colon after the variable name, then the type.
@@ -66,6 +77,24 @@ const names: string[] = ["Alice", "Bob", "Charlie"];
 console.log(scores[0]);   // 10
 console.log(names.length); // 3
 
+// ── CONCEPT 6b: Strict equality ===  ─────────────────────────
+// Python's == always compares VALUES — it's safe and predictable.
+// JavaScript has TWO equality operators:
+//   ==   "loose" equality — does type coercion before comparing (AVOID)
+//   ===  "strict" equality — same value AND same type (ALWAYS use this)
+//
+// Examples where == gives surprising results (why we avoid it):
+//   0 == false  → true   (!!!)
+//   "" == false → true   (!!!)
+//   null == undefined → true  (!!!)
+//
+// With ===, these are all false. Use === everywhere.
+// TypeScript + Biome will warn you if you accidentally use ==.
+
+console.log(1 === 1);    // true
+console.log(1 === "1");  // false — different types
+console.log(0 === false); // false — number vs boolean
+
 // ── CONCEPT 7: null and undefined ─────────────────────────────
 // null = explicitly empty   undefined = not yet assigned
 
@@ -93,6 +122,9 @@ console.log(display);
 // Then print it
 // YOUR CODE:
 
+const model = "claude-sonnet-4-6"
+console.log(`The modelis ${model}`)
+
 
 // EXERCISE 2:
 // Declare a `let` variable called `tokenCount` starting at 0
@@ -100,14 +132,23 @@ console.log(display);
 // Print the final value (should be 350)
 // YOUR CODE:
 
+let tokenCount = 0
+tokenCount = tokenCount + 100
+tokenCount = tokenCount + 250
+console.log(`The token count is ${tokenCount}`)
+
 
 // EXERCISE 3:
 // Create a template literal that prints: "Model: claude-sonnet-4-6, Tokens: 350"
 // Using the variables you created above
 // YOUR CODE:
+console.log(`Model: ${model}, Tokens: ${tokenCount}`)
 
 
 // EXERCISE 4:
 // Declare a variable `apiKey` of type `string | null` set to null
 // Use nullish coalescing to print either the key or "no key set"
 // YOUR CODE:
+
+const apiKey: string | null = null
+console.log(apiKey ?? "no key set")
