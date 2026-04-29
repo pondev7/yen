@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADR — yen coding agent</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --surface-2:   #21262d;
+      --border:      #30363d;
+      --text:        #e6edf3;
+      --text-dim:    #7d8590;
+      --accent:      #58a6ff;
+      --accent-dim:  #1f3a5f;
+      --green:       #3fb950;
+      --green-dim:   #1a3a22;
+      --yellow:      #d29922;
+      --yellow-dim:  #3a2e00;
+      --red:         #f85149;
+      --red-dim:     #3a0f0e;
+      --purple:      #bc8cff;
+      --purple-dim:  #2a1a4a;
+      --radius:      8px;
+      --font-mono:   "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      --font-sans:   -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.7;
+      padding: 2rem 1rem 6rem;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -1px;
+    }
+
+    .logo span { color: var(--text-dim); font-weight: 400; }
+
+    .site-header h1 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
+
+    /* ── TOC ──────────────────────────────────────────────── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .toc h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+    }
+
+    .toc ol {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    .toc .adr-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      min-width: 4rem;
+    }
+
+    /* ── ADR Card ─────────────────────────────────────────── */
+    .adr {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .adr-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .adr-header-left { display: flex; flex-direction: column; gap: 0.25rem; }
+
+    .adr-id {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .adr-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .adr-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Status badges ────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-accepted  { background: var(--green-dim);  color: var(--green);  }
+    .badge-proposed  { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-superseded{ background: var(--red-dim);    color: var(--red);    }
+    .badge-deprecated{ background: var(--red-dim);    color: var(--red);    }
+
+    .badge::before { content: "●"; font-size: 0.6rem; }
+
+    /* ── Milestone tag ────────────────────────────────────── */
+    .milestone-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--purple);
+      background: var(--purple-dim);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* ── ADR Body ─────────────────────────────────────────── */
+    .adr-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ── Section ──────────────────────────────────────────── */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.4rem;
+    }
+
+    .section p {
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+
+    /* ── Decision highlight box ───────────────────────────── */
+    .decision-box {
+      background: var(--accent-dim);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 0.75rem 1rem;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+
+    /* ── Two-column grid ──────────────────────────────────── */
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .cols { grid-template-columns: 1fr; }
+    }
+
+    /* ── Alternatives table ───────────────────────────────── */
+    .alt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .alt-table thead tr {
+      background: var(--surface-2);
+    }
+
+    .alt-table th {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .alt-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .alt-table tr:last-child td { border-bottom: none; }
+
+    .alt-table .chosen {
+      background: var(--green-dim);
+    }
+
+    .alt-table .chosen td:first-child {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .check { color: var(--green); }
+    .cross { color: var(--red); }
+    .neutral { color: var(--yellow); }
+
+    /* ── Consequences list ────────────────────────────────── */
+    .consequences {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .consequence {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      padding: 0.3rem 0;
+    }
+
+    .consequence .icon { flex-shrink: 0; margin-top: 0.1rem; }
+    .consequence.positive .icon { color: var(--green); }
+    .consequence.negative .icon { color: var(--red); }
+    .consequence.neutral  .icon { color: var(--yellow); }
+
+    /* ── Code inline ──────────────────────────────────────── */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.35em;
+      color: var(--purple);
+    }
+
+    /* ── Divider ──────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .site-footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Site Header ───────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="logo">yen<span>/</span>adr</div>
+    <h1>Architecture Decision Records</h1>
+  </header>
+
+  <!-- ── Table of Contents ─────────────────────────────────── -->
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#adr-001"><span class="adr-num">ADR-001</span> Use Bun as the JavaScript runtime</a></li>
+      <li><a href="#adr-002"><span class="adr-num">ADR-002</span> Use Ink for the terminal UI</a></li>
+      <li><a href="#adr-003"><span class="adr-num">ADR-003</span> Use TypeScript in strict mode</a></li>
+      <li><a href="#adr-004"><span class="adr-num">ADR-004</span> Use Biome for linting and formatting</a></li>
+      <li><a href="#adr-005"><span class="adr-num">ADR-005</span> Use Zod for runtime validation and tool schemas</a></li>
+      <li><a href="#adr-006"><span class="adr-num">ADR-006</span> Use discriminated unions for all state actions</a></li>
+    </ol>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-001                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-001">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-001</span>
+        <span class="adr-title">Use Bun as the JavaScript runtime</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M1</span>
+        <span class="badge badge-accepted">Accepted</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>We need a runtime to execute TypeScript code for a CLI coding agent. The runtime must support TypeScript natively, start up fast (it's a CLI tool — startup latency is visible to the user), and have modern built-in APIs so we don't need dozens of extra packages.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Use <strong>Bun</strong> as the runtime, package manager, and bundler for the entire project.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Alternatives considered</div>
+        <table class="alt-table">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>TypeScript native</th>
+              <th>Startup speed</th>
+              <th>Built-in APIs</th>
+              <th>Ecosystem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="chosen">
+              <td>Bun ✓</td>
+              <td><span class="check">✓ Yes</span></td>
+              <td><span class="check">✓ ~7ms</span></td>
+              <td><span class="check">✓ file, fetch, spawn, SQLite</span></td>
+              <td><span class="check">✓ npm compatible</span></td>
+            </tr>
+            <tr>
+              <td>Node.js</td>
+              <td><span class="cross">✗ Needs ts-node / tsx</span></td>
+              <td><span class="neutral">~ ~100ms</span></td>
+              <td><span class="neutral">~ fs, http (verbose)</span></td>
+              <td><span class="check">✓ Largest ecosystem</span></td>
+            </tr>
+            <tr>
+              <td>Deno</td>
+              <td><span class="check">✓ Yes</span></td>
+              <td><span class="check">✓ Fast</span></td>
+              <td><span class="check">✓ Built-in fetch, file</span></td>
+              <td><span class="cross">✗ Different module system, smaller ecosystem</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>No build step — <code>bun run file.ts</code> just works</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Single tool replaces Node + npm + ts-node + esbuild</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Fast startup improves CLI feel significantly</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span><code>Bun.file()</code>, <code>Bun.spawn()</code>, <code>Bun.$</code> cover all agent needs natively</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>A small number of Node.js packages may not be fully compatible</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Bun is newer — less StackOverflow coverage than Node</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-002                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-002">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-002</span>
+        <span class="adr-title">Use Ink for the terminal UI</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M1</span>
+        <span class="badge badge-accepted">Accepted</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>The agent needs a rich interactive terminal UI — scrollable message history, a live input box with cursor, status bar, streaming text, syntax-highlighted code blocks, and diff views. We need a framework that makes this manageable without low-level terminal escape code manipulation.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Use <strong>Ink</strong> (React for the terminal) as the UI framework.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Alternatives considered</div>
+        <table class="alt-table">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Abstraction level</th>
+              <th>Component model</th>
+              <th>Hooks / state</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="chosen">
+              <td>Ink ✓</td>
+              <td><span class="check">✓ High — React components</span></td>
+              <td><span class="check">✓ Full React tree</span></td>
+              <td><span class="check">✓ useState, useReducer, useEffect</span></td>
+            </tr>
+            <tr>
+              <td>blessed / neo-blessed</td>
+              <td><span class="neutral">~ Mid — widget API</span></td>
+              <td><span class="cross">✗ Imperative, no components</span></td>
+              <td><span class="cross">✗ Manual event wiring</span></td>
+            </tr>
+            <tr>
+              <td>Raw ANSI escape codes</td>
+              <td><span class="cross">✗ None — fully manual</span></td>
+              <td><span class="cross">✗ None</span></td>
+              <td><span class="cross">✗ None</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>React knowledge transfers — same hooks, same mental model as web React</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Declarative UI means no manual screen redraw logic</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Flexbox layout via <code>Box</code> — no manual column arithmetic</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Used by real CLIs including Vercel, Gatsby, and Claude Code itself</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Requires learning React if you don't know it already</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Ink re-renders the whole screen on state change — must profile for large outputs</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-003                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-003">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-003</span>
+        <span class="adr-title">Use TypeScript in strict mode</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M1</span>
+        <span class="badge badge-accepted">Accepted</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>A coding agent handles file operations, shell commands, and API calls — categories where type errors cause real damage (wrong path, wrong parameter, mishandled null). We need the type system to catch as many bugs as possible at compile time rather than at runtime.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Enable <strong><code>"strict": true</code></strong> in <code>tsconfig.json</code>, plus <code>noUnusedLocals</code> and <code>noUnusedParameters</code>.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">What strict mode enables</div>
+        <div class="cols">
+          <div>
+            <div class="section-label" style="margin-bottom: 0.5rem">Included flags</div>
+            <div class="consequences">
+              <div class="consequence positive"><span class="icon">✓</span><span><code>strictNullChecks</code> — <code>null</code> and <code>undefined</code> are not assignable to other types</span></div>
+              <div class="consequence positive"><span class="icon">✓</span><span><code>noImplicitAny</code> — variables must have explicit or inferred types</span></div>
+              <div class="consequence positive"><span class="icon">✓</span><span><code>strictFunctionTypes</code> — function parameter types checked correctly</span></div>
+              <div class="consequence positive"><span class="icon">✓</span><span><code>strictPropertyInitialization</code> — class fields must be initialized</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="section-label" style="margin-bottom: 0.5rem">Extra flags added</div>
+            <div class="consequences">
+              <div class="consequence positive"><span class="icon">✓</span><span><code>noUnusedLocals</code> — error on declared but unused variables</span></div>
+              <div class="consequence positive"><span class="icon">✓</span><span><code>noUnusedParameters</code> — error on declared but unused function parameters</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>Null-related crashes caught at compile time — critical for a file/shell agent</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Dead code detected automatically — keeps the codebase clean</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>More verbose in places — requires explicit null handling and type annotations</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Higher barrier for quick prototyping — intentional trade-off</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-004                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-004">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-004</span>
+        <span class="adr-title">Use Biome for linting and formatting</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M1</span>
+        <span class="badge badge-accepted">Accepted</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>The project needs consistent code formatting and a linter to catch common mistakes. The traditional TypeScript toolchain uses ESLint (linting) + Prettier (formatting) as two separate tools with two separate configs that sometimes conflict with each other.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Use <strong>Biome</strong> — a single tool that replaces both ESLint and Prettier. Run via <code>bun biome check --write</code>.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Alternatives considered</div>
+        <table class="alt-table">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Tools needed</th>
+              <th>Config files</th>
+              <th>Speed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="chosen">
+              <td>Biome ✓</td>
+              <td><span class="check">✓ 1</span></td>
+              <td><span class="check">✓ 1 (biome.json)</span></td>
+              <td><span class="check">✓ ~35× faster than ESLint</span></td>
+            </tr>
+            <tr>
+              <td>ESLint + Prettier</td>
+              <td><span class="cross">✗ 2 + many plugins</span></td>
+              <td><span class="cross">✗ .eslintrc + .prettierrc</span></td>
+              <td><span class="neutral">~ Slower, especially on large files</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>One config file, one command, zero conflicts between formatter and linter</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Written in Rust — dramatically faster CI times</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Biome is newer — a handful of ESLint rules don't have Biome equivalents yet</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-005                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-005">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-005</span>
+        <span class="adr-title">Use Zod for runtime validation and tool schemas</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M3</span>
+        <span class="badge badge-proposed">Proposed</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>The agentic loop receives tool call inputs from the LLM as raw JSON. These must be validated before execution — a wrong type or missing field on a file-write tool could cause real damage. We also need to generate JSON Schema definitions from the same type definitions, so the LLM knows how to call each tool correctly.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Use <strong>Zod</strong> to define tool input schemas. Use <code>z.infer&lt;typeof Schema&gt;</code> to derive TypeScript types. Auto-generate JSON Schema for the Anthropic API from the same Zod schema.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Python parallel</div>
+        <p>Zod is the TypeScript equivalent of <strong>Pydantic</strong>. <code>z.object({})</code> ≈ <code>BaseModel</code>, <code>schema.parse(data)</code> ≈ <code>model.model_validate(data)</code>, <code>schema.safeParse(data)</code> ≈ catching <code>ValidationError</code>. The key advantage over Pydantic: <code>z.infer</code> derives the TypeScript type automatically — one source of truth for both the type and the validator.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>Single Zod schema generates both the TypeScript type AND the JSON Schema for the LLM</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Runtime validation catches malformed LLM tool calls before they execute</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Familiar API for anyone coming from Pydantic</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Adds a dependency and a new API to learn</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>Zod v4 (2025) has breaking changes from v3 — pin the version</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- ADR-006                                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <article class="adr" id="adr-006">
+    <div class="adr-header">
+      <div class="adr-header-left">
+        <span class="adr-id">ADR-006</span>
+        <span class="adr-title">Use discriminated unions for all state actions</span>
+      </div>
+      <div class="adr-meta">
+        <span class="milestone-tag">M1</span>
+        <span class="badge badge-accepted">Accepted</span>
+      </div>
+    </div>
+
+    <div class="adr-body">
+
+      <div class="section">
+        <div class="section-label">Context</div>
+        <p>The application has several state machines — the input buffer, vim mode, agent loop status, and streaming state. Each needs a set of operations that update state in well-defined ways. We need a pattern that is type-safe, exhaustively checked by the compiler, and readable to future contributors.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Decision</div>
+        <div class="decision-box">
+          Model all state updates as <strong>discriminated union action types</strong> handled by a <strong>reducer function</strong>, consumed via React's <code>useReducer</code> hook.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Pattern example</div>
+        <div class="cols">
+          <div>
+            <div class="section-label" style="margin-bottom:0.5rem">Without pattern</div>
+            <div class="consequences">
+              <div class="consequence negative"><span class="icon">−</span><span>setState scattered across many handlers</span></div>
+              <div class="consequence negative"><span class="icon">−</span><span>No central place to understand all state transitions</span></div>
+              <div class="consequence negative"><span class="icon">−</span><span>Easy to forget a case, no compile-time exhaustiveness check</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="section-label" style="margin-bottom:0.5rem">With pattern</div>
+            <div class="consequences">
+              <div class="consequence positive"><span class="icon">+</span><span>All transitions in one reducer function</span></div>
+              <div class="consequence positive"><span class="icon">+</span><span>TypeScript enforces exhaustive <code>switch</code> — missing case = compile error</span></div>
+              <div class="consequence positive"><span class="icon">+</span><span>Actions are named and self-documenting: <code>{ type: "deleteWordBackward" }</code></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Consequences</div>
+        <div class="consequences">
+          <div class="consequence positive"><span class="icon">+</span><span>Pure reducer functions are trivially testable — no React needed in tests</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>State never mutated directly — predictable, debuggable, undo-able</span></div>
+          <div class="consequence positive"><span class="icon">+</span><span>Pattern scales to the agent loop state machine in Milestone 3</span></div>
+          <div class="consequence negative"><span class="icon">−</span><span>More boilerplate than direct <code>setState</code> for simple cases</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    yen — TUI coding agent &nbsp;·&nbsp; ADRs last updated April 2026
+  </footer>
+
+</div>
+</body>
+</html>
